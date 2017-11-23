@@ -2,7 +2,7 @@
 logger "Running TVH Recording Wake-Up Script"
 
 # Settings
-default_wake=10:00:00
+sys_start=10:00:00
 loop_sleep_timer=15m
 tvh_user=kodi
 tvh_password=kodi
@@ -12,11 +12,11 @@ tvh_port=9981
 # Loop
 while true
 do
-
     # Default wake up time - Check to see if the default wake up time for today is already in the past and set it for today or tomorrow
-    current_time=`date +%s`
-    wake_today=`date -d "today ${default_wake}" +%s`
-    wake_tomorrow=`date -d "tomorrow ${default_wake}" +%s`
+    default_wake=$sys_start
+    current_time=$(date +%s)
+    wake_today=$(date -d "today ${default_wake}" +%s)
+    wake_tomorrow=$(date -d "tomorrow ${default_wake}" +%s)
 
     if [ $current_time -gt $wake_today ]; then
       default_wake=$wake_tomorrow
@@ -28,14 +28,14 @@ do
     logger "TVH WakeUp: Default wake up time is $default_wake_converted"
 
     # Get next scheduled recording time
-    next_recording=`curl -s http://"$tvh_user":"$tvh_password"@"$tvh_host":"$tvh_port"/api/dvr/entry/grid_upcoming | tr , '\n' | grep start_real | sed "s/.*start_real.:\([0-9]*\).*/\1/" | sort -n | head -1`
-    next_recording_converted=`date -d @$next_recording`
+    next_recording=$(curl -s http://"$tvh_user":"$tvh_password"@"$tvh_host":"$tvh_port"/api/dvr/entry/grid_upcoming | tr , '\n' | grep start_real | sed "s/.*start_real.:\([0-9]*\).*/\1/" | sort -n | head -1)
+    next_recording_converted=$(date -d @$next_recording)
  
     if [ "$next_recording" = "" ]; then
         logger "TVH WakeUp: No recordings scheduled."
     else
         wake=$((next_recording-300))
-        wake_converted=`date -d @$wake`
+        wake_converted=$(date -d @$wake)
         logger "TVH WakeUp: Next recording is scheduled at $next_recording_converted - Timestamp $next_recording"
     fi
 
