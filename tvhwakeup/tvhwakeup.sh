@@ -22,6 +22,8 @@ tvh_port=9981
 # Loop
 while true
 do
+    logger "##TVH WakeUp check start ###"
+
     # Set the default wake up time based on the weekday
     today=$(date +'%u')
 
@@ -69,7 +71,7 @@ do
     if [ "$recordings" = "" ]; then
 
         # no recordings found, use default wake up time
-        logger "TVH WakeUp: No recording found. Use default waking time at $default_wake_converted"
+        logger "TVH WakeUp: No recording found. Use default waking time."
         rtc_wake=$default_wake
 
     else
@@ -81,7 +83,7 @@ do
             if [ "$current_time_seconds" -gt "$timestamp" ]; then
                 # Recroding is already in progress
                 next_recording_converted=$(date -d @$timestamp)
-                logger "TVH WakeUp: Fetched recording is already in progress or in the past. ($next_recording_converted - $timestamp) "
+                logger "TVH WakeUp: Fetched recording is already in progress or in the past. $next_recording_converted - Timestamp $timestamp "
             else
                 # Recording is in the future
                 next_recording=$timestamp
@@ -98,20 +100,30 @@ do
         if [ "$default_wake" -lt "$wake" ]; then
             # Default wake up time is nearer in the future.
             rtc_wake=$default_wake
-            logger "TVH WakeUp: The next scheduled recording is after the default wake up time. Use default waking time at $default_wake_converted"
+            logger "TVH WakeUp: The recording is after the default waking time. Use default waking time."
         else
             # Recording is scheduled before the server has been started by the default setting.
             # Use the recording time and give the server 3 minutes more time to wake up.
             rtc_wake=$wake
-            logger "TVH WakeUp: The next scheduled recording is before the default wake up time. Set waking time at $wake_converted"
+            logger "TVH WakeUp: The recording is before the default waking time. Use recording timestamp."
         fi
     fi
 
-    # Set next required wake up time
-    /usr/bin/sudo /usr/sbin/rtcwake -l -m no -t $rtc_wake
+    # Check the current set time and update it if required
+    rtc_wake_current_converted=$(rtcwake -l -m show | sed s/"alarm: on  "//g)
+    rtc_wake_current=$(date -d "${rtc_wake_current_converted}" +%s)
+    rtc_wake_converted=$(date -d @$rtc_wake)
+
+    if [ "$rtc_wake_current" = "$rtc_wake" ]; then
+        logger "TVH WakeUp: Boot is already correctly scheduled at $rtc_wake_current_converted"
+    else
+        logger "TVH WakeUp: Existing scheduled boot does not match. Set new waking time at $rtc_wake_converted"
+        rtcwake -l -m no -t $rtc_wake
+    fi
 
     #Sleep
     logger "TVH WakeUp: Wait $loop_sleep_timer for the next check"
+    logger "### TVH WakeUp check end ###"
     sleep $loop_sleep_timer
 
 done
