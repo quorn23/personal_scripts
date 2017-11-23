@@ -23,34 +23,27 @@ tvh_port=9981
 while true
 do     
     # Set the default wake up time based on the weekday 
-    today=$(date -d'today' +'%a')
-    monday=$(date -d'monday' +'%a')
-    tuesday=$(date -d'tuesday' +'%a')
-    wednesday=$(date -d'wednesday' +'%a')
-    thursday=$(date -d'thursday' +'%a')
-    friday=$(date -d'friday' +'%a')
-    saturday=$(date -d'saturday' +'%a')
-    sunday=$(date -d'sunday' +'%a')
+    today=$(date +'%u')
     
-    if [ "$today" = "$monday" ]; then
+    if [ "$today" = "1" ]; then
         wake_today=$sys_start_mo
         wake_tomorrow=$sys_start_tu
-    elif [ "$today" = "$tuesday" ]; then
+    elif [ "$today" = "2" ]; then
         wake_today=$sys_start_tu
         wake_tomorrow=$sys_start_we
-    elif [ "$today" = "$wednesday" ]; then
+    elif [ "$today" = "3" ]; then
         wake_today=$sys_start_we
         wake_tomorrow=$sys_start_th
-    elif [ "$today" = "$thursday" ]; then
+    elif [ "$today" = "4" ]; then
         wake_today=$sys_start_th
         wake_tomorrow=$sys_start_fr
-    elif [ "$today" = "$friday" ]; then
+    elif [ "$today" = "5" ]; then
         wake_today=$sys_start_fr
         wake_tomorrow=$sys_start_sa
-    elif [ "$today" = "$saturday" ]; then
+    elif [ "$today" = "6" ]; then
         wake_today=$sys_start_sa
         wake_tomorrow=$sys_start_su
-    elif [ "$today" = "$sunday" ]; then
+    elif [ "$today" = "7" ]; then
         wake_today=$sys_start_su
         wake_tomorrow=$sys_start_mo
     fi
