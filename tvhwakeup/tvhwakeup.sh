@@ -75,6 +75,7 @@ do
  
     if [ "$next_recording" = "" ]; then
         logger "TVH WakeUp: No recordings scheduled."
+        wake=""     
     else
         wake=$((next_recording-300))
         wake_converted=$(date -d @$wake)
@@ -82,12 +83,15 @@ do
     fi
 
     # Check if a recording is scheduled before the server is alive
-    if [ "$default_wake" -lt "$wake" ]; then
+    if [ "$wake" = "" ]; then
         rtc_wake=$default_wake
-        logger "TVH WakeUp: Default wake up time is earlier than the next scheduled recording. Use default waking time at $default_wake_converted"
+        logger "TVH WakeUp: No recording found. Use default waking time at $default_wake_converted"
+    elif [ "$default_wake" -lt "$wake" ]; then
+        rtc_wake=$default_wake
+        logger "TVH WakeUp: Found scheduled recording is after the next default wake up time. Use default waking time at $default_wake_converted"
     else
         rtc_wake=$wake
-        logger "TVH WakeUp: Found scheduled recording before the server is going to start. Set waking time at $wake_converted"
+        logger "TVH WakeUp: Found scheduled recording is before the next default wake up time. Set waking time at $wake_converted"
     fi
 
     # Set next required wake up time
