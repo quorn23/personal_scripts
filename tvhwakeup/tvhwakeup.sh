@@ -24,8 +24,8 @@ do
       default_wake=$wake_today
     fi
 
-    default_wake_converted=`date --date=@$default_wake`
-    logger "TVH WakeUp: Default wake up time is $default_wake_converted"
+    default_wake_converted=$(date --date=@$default_wake`)
+    logger "TVH WakeUp: Next default wake up time is $default_wake_converted"
 
     # Get next scheduled recording time
     next_recording=$(curl -s http://"$tvh_user":"$tvh_password"@"$tvh_host":"$tvh_port"/api/dvr/entry/grid_upcoming | tr , '\n' | grep start_real | sed "s/.*start_real.:\([0-9]*\).*/\1/" | sort -n | head -1)
