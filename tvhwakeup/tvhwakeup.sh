@@ -1,7 +1,7 @@
 #!/bin/sh
 logger "Running TVH Recording Wake-Up Script"
 
-# Usual daily wake up time
+# Settings
 default_wake=10:00:00
 loop_sleep_timer=15m
 tvh_user=kodi
@@ -9,11 +9,11 @@ tvh_password=kodi
 tvh_host=localhost
 tvh_port=9981
 
-# Loop to scan for new scheduled recordings
+# Loop
 while true
 do
 
-    # Default wake up time - Check to see if the wake up for today is already in the past
+    # Default wake up time - Check to see if the default wake up time for today is already in the past and set it for today or tomorrow
     current_time=`date +%s`
     wake_today=`date -d "today ${default_wake}" +%s`
     wake_tomorrow=`date -d "tomorrow ${default_wake}" +%s`
@@ -39,7 +39,7 @@ do
         logger "TVH WakeUp: Next recording is scheduled at $next_recording_converted - Timestamp $next_recording"
     fi
 
-    # Check if a scheduled recording is earlier than the default wake up time
+    # Check if a recording is scheduled before the server is alive
     if [ $default_wake -lt $wake ]; then
         rtc_wake=$default_wake
         logger "TVH WakeUp: Default wake up time is earlier than the next scheduled recording. Use default waking time at $default_wake_converted"
