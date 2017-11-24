@@ -22,7 +22,7 @@ tvh_port=9981
 # Loop
 while true
 do
-    logger "##TVH WakeUp check start ###"
+    logger "### TVH WakeUp check start ###"
 
     # Set the default wake up time based on the weekday
     today=$(date +'%u')
