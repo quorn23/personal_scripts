@@ -103,7 +103,7 @@ do
             # Recording is scheduled before the server has been started by the default setting.
             # Use the recording time and give the server 3 minutes more time to wake up.
             rtc_wake=$timestamp_with_buffer
-            logger "TVH WakeUp: The recording is before the default waking time."
+            logger "TVH WakeUp: The recording is before the default waking time. Use recording timestamp as waking time."
         fi
     fi
 
