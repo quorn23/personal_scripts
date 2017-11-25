@@ -19,14 +19,7 @@ tvh_password=kodi
 tvh_host=localhost
 tvh_port=9981
 
-# Loop
-while true
-do
-    logger "### TVH WakeUp check start ###"
-
-    # Set the default wake up time based on the weekday
-    today=$(date +'%u')
-    current_time_seconds=$(date +%s)
+get_default_wake(){
 
     if [ "$today" = "1" ]; then
         wake_today=$sys_start_mo
@@ -62,52 +55,49 @@ do
     fi
 
     default_wake_converted=$(date --date=@"$default_wake")
-    logger "TVH WakeUp: Next default waking time is $default_wake_converted"
 
-    # Get next scheduled recording time
+}
+
+get_recordings(){
+    
     recordings=$(curl -s http://"$tvh_user":"$tvh_password"@"$tvh_host":"$tvh_port"/api/dvr/entry/grid_upcoming | tr , '\n' | grep start_real | sed "s/.*start_real.:\([0-9]*\).*/\1/" | sort -n)
-
-    # Check if recordings are scheduled
-    if [ "$recordings" = "" ]; then
-
-        # no recordings found, use default wake up time
-        logger "TVH WakeUp: No recording found. Use default waking time."
-        rtc_wake=$default_wake
-
+    if ! [ "$recordings" = "" ]; then
+        found_recordings=true
     else
-
-        # recordings found, select the one which is not already in progress
-        for timestamp in $recordings
-        do
-
-            timestamp_converted=$(date -d @$timestamp)
-            timestamp_with_buffer=$((timestamp-180))
-
-            if [ "$current_time_seconds" -gt "$timestamp_with_buffer" ]; then
-                # Recroding is already in progress
-                logger "TVH WakeUp: Fetched recording is already in progress or in the past. $timestamp_converted - Timestamp $timestamp "
-            else
-                # Recording is in the future
-                logger "TVH WakeUp: Next valid recording is scheduled at $timestamp_converted - Timestamp $timestamp"
-                break
-            fi
-
-        done
-
-        # Compare recording timestamp against thedefault wake up time
-        if [ "$default_wake" -lt "$timestamp_with_buffer" ]; then
-            # Default wake up time is nearer in the future.
-            rtc_wake=$default_wake
-            logger "TVH WakeUp: The recording is after the default waking time. Use default waking time."
-        else
-            # Recording is scheduled before the server has been started by the default setting.
-            # Use the recording time and give the server 3 minutes more time to wake up.
-            rtc_wake=$timestamp_with_buffer
-            logger "TVH WakeUp: The recording is before the default waking time. Use recording timestamp as waking time."
-        fi
+        found_recordings=false
     fi
 
-    # Check the current set time and update it if required
+}
+
+get_recording_time(){
+
+    # Check for valid recordings
+    for timestamp in $recordings 
+    do
+        timestamp_converted=$(date -d @$timestamp)
+        timestamp_with_buffer=$((timestamp-180))
+
+        if [ "$current_time_seconds" -gt "$timestamp_with_buffer" ]; then
+            logger "TVH WakeUp: Found [$timestamp_converted - Timestamp $timestamp]"
+            logger "TVH WakeUp: Recording already in progress or in the past. Skip."
+        else
+            if [ "$default_wake" -lt "$timestamp_with_buffer" ]; then
+                rtc_wake=$default_wake
+                logger "TVH WakeUp: Found [$timestamp_converted - Timestamp $timestamp]"
+                logger "TVH WakeUp: Recording starts after the server has been booted up. Use default waking time."
+            else
+                rtc_wake=$timestamp_with_buffer
+                logger "TVH WakeUp: Found [$timestamp_converted - Timestamp $timestamp]"
+                logger "TVH WakeUp: Recording starts before the server has been booted up. Use it as waking time."
+            fi
+            break
+        fi
+    done
+
+}
+
+set_rtclock(){
+    
     rtc_wake_current_converted=$(rtcwake -l -m show | sed s/"alarm: on  "//g)
     rtc_wake_current=$(date -d "${rtc_wake_current_converted}" +%s)
     rtc_wake_converted=$(date -d @$rtc_wake)    
@@ -119,10 +109,39 @@ do
         logger "TVH WakeUp: Existing scheduled boot does not match. Set new waking time at $rtc_wake_converted"
         rtcwake -l -m no -t $rtc_wake
     fi
+}
+
+# Loop
+while true
+do
+    logger "### TVH WakeUp - Scan started ###"
+
+    # Update current time variables
+    today=$(date +'%u')
+    current_time_seconds=$(date +%s)
+
+    # Set the default wake up time based on the weekday
+    get_default_wake
+    logger "TVH WakeUp: Next default waking time is $default_wake_converted"
+
+    # Get next scheduled recording time
+    get_recordings
+
+    # Check if recordings are scheduled
+    logger "### TVH WakeUp - Check for recordings ###"
+    if [ $found_recordings ]; then
+        get_recording_time
+    else
+        logger "TVH WakeUp: No recordings found. Use default waking time."
+        rtc_wake=$default_wake
+    fi
+
+    # Check the current set time and update it if required
+    logger "### TVH WakeUp - Set wake up time ###"
+    set_rtclock
 
     #Sleep
-    logger "TVH WakeUp: Wait $loop_sleep_timer for the next check"
-    logger "### TVH WakeUp check end ###"
+    logger "### TVH WakeUp - Wait $loop_sleep_timer ###"
     sleep $loop_sleep_timer
 
 done
