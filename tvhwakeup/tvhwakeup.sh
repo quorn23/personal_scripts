@@ -5,10 +5,10 @@ logger "Running TVH Recording Wake-Up Script"
 sys_start_mo=12:00:00
 sys_start_tu=12:00:00
 sys_start_we=12:00:00
-sys_start_th=10:00:00
-sys_start_fr=10:00:00
-sys_start_sa=08:00:00
-sys_start_su=08:00:00
+sys_start_th=11:00:00
+sys_start_fr=11:00:00
+sys_start_sa=09:00:00
+sys_start_su=09:00:00
 
 #check intervall
 loop_sleep_timer=15m
@@ -18,6 +18,9 @@ tvh_user=kodi
 tvh_password=kodi
 tvh_host=localhost
 tvh_port=9981
+
+#pushover integration
+pushover_exec=/opt/scripts/pushover.sh
 
 get_default_wake(){
 
@@ -59,7 +62,7 @@ get_default_wake(){
 }
 
 get_recordings(){
-    
+
     recordings=$(curl -s http://"$tvh_user":"$tvh_password"@"$tvh_host":"$tvh_port"/api/dvr/entry/grid_upcoming | tr , '\n' | grep start_real | sed "s/.*start_real.:\([0-9]*\).*/\1/" | sort -n)
     if ! [ "$recordings" = "" ]; then
         found_recordings=true
@@ -108,6 +111,9 @@ set_rtclock(){
     else
         logger "TVH WakeUp: Existing scheduled boot does not match. Set new waking time at $rtc_wake_converted"
         rtcwake -l -m no -t $rtc_wake
+        if ! [ "$pushover_exec" == "" ]; then
+             $pushover_exec -t "Boot" "Next scheduled auto boot is at $rtc_wake_converted"
+        fi
     fi
 }
 
