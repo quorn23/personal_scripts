@@ -135,7 +135,7 @@ do
 
     # Check if recordings are scheduled
     logger "### TVH WakeUp - Check for recordings ###"
-    if [ $found_recordings ]; then
+    if [ $found_recordings = true ]; then
         get_recording_time
     else
         logger "TVH WakeUp: No recordings found. Use default waking time."
