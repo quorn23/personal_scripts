@@ -1,13 +1,13 @@
 
 Script
-1. Edit path
+1. Edit variables in the head of the file
 2. chmod 777 tvhwakeup.sh
 
 Service
 
-1. Edit script path
-2. tvhwakeup.server -> /etc/systemd/system
-3. chmod 777 tvhwakeup.service
+1. Edit script paths
+2. cp tvhwakeup.service /etc/systemd/system
+3. chmod 777 /etc/systemd/system/tvhwakeup.service
 4. systemctl daemon-reload
 5. systemctl enable tvhwakeup.service
 6. service tvhwakeup start
