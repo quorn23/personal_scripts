@@ -111,7 +111,7 @@ set_rtclock(){
     else
         logger "TVH WakeUp: Existing scheduled boot does not match. Set new waking time at $rtc_wake_converted"
         rtcwake -l -m no -t $rtc_wake
-        if ! [ "$pushover_exec" == "" ]; then
+        if ! [ -z "$pushover_exec" ]; then
              $pushover_exec -t "Boot" "Next scheduled auto boot is at $rtc_wake_converted"
         fi
     fi
