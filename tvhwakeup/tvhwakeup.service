@@ -7,6 +7,7 @@ Type=simple
 User=root
 Group=root
 WorkingDirectory=/mnt/omv1/scripts/
+ExecStartPre=/bin/sleep 10
 ExecStart=/mnt/omv1/scripts/tvhwakeup.sh
 ExecStop=/bin/kill -9 $MAINPID
 RestartSec=15
