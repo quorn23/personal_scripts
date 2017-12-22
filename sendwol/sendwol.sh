@@ -6,6 +6,9 @@ loop_sleep_timer=10s
 # Loop
 while true
 do
+        unset found_ip
+        unset ping_result
+        
         # Check if client IPs are online
         for client in "${check_ip[@]}"
         do
