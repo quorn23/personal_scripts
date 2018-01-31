@@ -20,7 +20,7 @@ tvh_host=localhost
 tvh_port=9981
 
 #pushover integration
-pushover_exec=/opt/scripts/pushover.sh
+#pushover_exec=/opt/scripts/pushover.sh
 
 get_default_wake(){
 
