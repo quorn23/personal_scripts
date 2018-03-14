@@ -1,6 +1,7 @@
 [Unit]
 Description=TVH WakeUp Service
-After=tvhwakeup.service
+After=network-online.target
+Requires=network-online.target
 
 [Service]
 Type=simple
