@@ -7,7 +7,10 @@ YTB_URL="https://www.youtube.com/watch?v="
 #TheMovieDB API
 API=
 #Language Code
-LANG=de
+LANG=$1
+if [ -z "$LANG" ]; then
+        LANG=de
+fi
 #################################
 
 rm trailerdl.log &>/dev/null
@@ -32,7 +35,8 @@ do
                         TMDBID=$(awk -F "[><]" '/tmdbid/{print $3}' "$DIR/$FILENAME.nfo" | awk -F'[ ]' '{print $1}')
 
                         #Get trailer YouTube ID
-                        ID=$(curl -s "http://api.themoviedb.org/3/movie/"$TMDBID"/videos?api_key="$API"&language="$LANG | jq -r '.results[0] .key')
+                        JSON=($(curl -s "http://api.themoviedb.org/3/movie/"$TMDBID"/videos?api_key="$API"&language="$LANG | jq -r '.results[] | select(.type=="Trailer") | .key'))
+                        ID="${JSON[0]}"
 
                         log ""
                         log "Movie Path: $DIR"
@@ -40,7 +44,7 @@ do
                         log "TheMovieDB ID: $TMDBID"
                         log "YouTube ID: $ID"
 
-                        if [ $ID != "null" ]; then
+                        if ! [ -z "$ID" ]; then
                                 log "Downloading: $YTB_URL$ID"
                                 downloadTrailer
                         fi
