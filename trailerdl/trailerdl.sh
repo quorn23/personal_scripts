@@ -1,41 +1,52 @@
+
 #!/bin/bash
+
 #################################
 #            Config             #
 #################################
 
-#Search this paths
+#Search this paths (required)
 PATHS=( "/mnt/omv1/omv1/filme" "/mnt/omv2/omv2/filme" "/mnt/omv3/omv3/filme" "/mnt/omv4/omv4/filme" )
 
-#Your TheMovieDB API
+#Your TheMovieDB API (required)
+#Please visit https://developers.themoviedb.org/3 for more information
 API=
 
-#Language Code
+#Language Code (required)
+#Examples: de = German, en = English, etc.
 LANGUAGE=de
+
+#Custom path to store the log files. Uncomment this line and change the path. By default the working directory is going to be used.
+#LOGPATH="/home/myexampleuser"
 
 #################################
 
 #Functions
 downloadTrailer(){
-        youtube-dl -f mp4 "https://www.youtube.com/watch?v=$ID" -o "$DIR/$FILENAME-trailer.%(ext)s" --restrict-filenames |& tee -a trailerdl.log
+        youtube-dl -f mp4 "https://www.youtube.com/watch?v=$ID" -o "$DIR/$FILENAME-trailer.%(ext)s" --restrict-filenames |& tee -a "$LOGPATH/trailerdl.log"
 }
 
 log(){
-        echo "$1" |& tee -a trailerdl.log
+        echo "$1" |& tee -a "$LOGPATH/trailerdl.log"
 }
 
 missing(){
-        echo "$1" |& tee -a trailerdl-missing.log &>/dev/null
+        echo "$1" |& tee -a "$LOGPATH/trailerdl-missing.log" &>/dev/null
 }
 
 #################################
 
 #Delete old logs
-rm trailerdl.log &>/dev/null
-rm trailerdl-missing.log &>/dev/null
+rm "$LOGPATH/trailerdl.log" &>/dev/null
+rm "$LOGPATH/trailerdl-missing.log" &>/dev/null
 
 #Use manually provided language code (optional)
 if ! [ -z "$1" ]; then
         LANGUAGE="$1"
+fi
+
+if [ -z "$LOGPATH" ]; then
+        LOGPATH=$(pwd)
 fi
 
 #Walk defined paths and search for movies without existing local trailer
@@ -63,19 +74,23 @@ do
                                 ID="${JSON[0]}"
 
                                 if ! [ -z "$ID" ]; then
-                                                #Start download
+
+                                        #Start download
                                         log "YouTube: https://www.youtube.com/watch?v=$ID"
                                         downloadTrailer
 
                                 else
+
                                         log "YouTube: n/a"
                                         missing "Error: Missing YouTube ID - $FILENAME - $DIR - TheMovideDB: https://www.themoviedb.org/movie/$TMDBID"
 
                                 fi
 
                         else
+
                                 log "TheMovieDB: n/a"
                                 missing "Error: Missing TheMovieDB ID - $FILENAME - $DIR"
+
                         fi
 
                 fi
