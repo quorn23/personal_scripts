@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 #################################
@@ -23,7 +22,17 @@ LANGUAGE=de
 
 #Functions
 downloadTrailer(){
-        youtube-dl -f mp4 "https://www.youtube.com/watch?v=$ID" -o "$DIR/$FILENAME-trailer.%(ext)s" --restrict-filenames |& tee -a "$LOGPATH/trailerdl.log"
+        DL=$(youtube-dl -f mp4 "https://www.youtube.com/watch?v=$ID" -o "$DIR/$FILENAME-trailer.%(ext)s" --restrict-filenames)
+        log "$DL"
+
+        if [ -z "$(echo "$DL" | grep "100.0%")" ]; then
+                missing ""
+                missing "Error: Downloading failed - $FILENAME - $DIR - TheMovideDB: https://www.themoviedb.org/movie/$TMDBID - YouTube: https://www.youtube.com/watch?v=$ID"
+                missing "------------------"
+                missing "$DL"
+                missing "------------------"
+                missing ""
+        fi
 }
 
 log(){
@@ -31,20 +40,21 @@ log(){
 }
 
 missing(){
-        echo "$1" |& tee -a "$LOGPATH/trailerdl-missing.log" &>/dev/null
+        echo "$1" |& tee -a "$LOGPATH/trailerdl-error.log" &>/dev/null
 }
 
 #################################
 
 #Delete old logs
 rm "$LOGPATH/trailerdl.log" &>/dev/null
-rm "$LOGPATH/trailerdl-missing.log" &>/dev/null
+rm "$LOGPATH/trailerdl-error.log" &>/dev/null
 
 #Use manually provided language code (optional)
 if ! [ -z "$1" ]; then
         LANGUAGE="$1"
 fi
 
+#Use working directory for logs except a custom one is configured
 if [ -z "$LOGPATH" ]; then
         LOGPATH=$(pwd)
 fi
@@ -87,10 +97,8 @@ do
                                 fi
 
                         else
-
                                 log "TheMovieDB: n/a"
                                 missing "Error: Missing TheMovieDB ID - $FILENAME - $DIR"
-
                         fi
 
                 fi
