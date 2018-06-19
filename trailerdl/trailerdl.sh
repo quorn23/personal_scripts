@@ -1,23 +1,22 @@
 #!/bin/bash
 #################################
-#Search this paths
-PATHS=( "/mnt/omv1/omv1/filme" "/mnt/omv2/omv2/filme" "/mnt/omv3/omv3/filme" "/mnt/omv4/omv4/filme" )
-#Base Url for video download
-YTB_URL="https://www.youtube.com/watch?v="
-#TheMovieDB API
-API=
-#Language Code
-LANG=$1
-if [ -z "$LANG" ]; then
-        LANG=de
-fi
+#            Config             #
 #################################
 
-rm trailerdl.log &>/dev/null
-rm trailerdl-missing.log &>/dev/null
+#Search this paths
+PATHS=( "/mnt/omv1/omv1/filme" "/mnt/omv2/omv2/filme" "/mnt/omv3/omv3/filme" "/mnt/omv4/omv4/filme" )
 
+#Your TheMovieDB API
+API=
+
+#Language Code
+LANGUAGE=de
+
+#################################
+
+#Functions
 downloadTrailer(){
-        youtube-dl -f mp4 "$YTB_URL$ID" -o "$DIR/$FILENAME-trailer.%(ext)s" --restrict-filenames |& tee -a trailerdl.log
+        youtube-dl -f mp4 "https://www.youtube.com/watch?v=$ID" -o "$DIR/$FILENAME-trailer.%(ext)s" --restrict-filenames |& tee -a trailerdl.log
 }
 
 log(){
@@ -28,6 +27,18 @@ missing(){
         echo "$1" |& tee -a trailerdl-missing.log &>/dev/null
 }
 
+#################################
+
+#Delete old logs
+rm trailerdl.log &>/dev/null
+rm trailerdl-missing.log &>/dev/null
+
+#Use manually provided language code (optional)
+if ! [ -z "$1" ]; then
+        LANGUAGE="$1"
+fi
+
+#Walk defined paths and search for movies without existing local trailer
 for i in "${PATHS[@]}"
 do
         find "$i" -mindepth 1 -maxdepth 2 -type d '!' -exec sh -c 'ls -1 "{}" | egrep -i -q "trailer\.(mp4|avi|mkv)$"' ';' -print | while read DIR
@@ -39,20 +50,21 @@ do
                         #Get TheMovieDB ID from NFO
                         TMDBID=$(awk -F "[><]" '/tmdbid/{print $3}' "$DIR/$FILENAME.nfo" | awk -F'[ ]' '{print $1}')
 
-                        if ! [ -z "$TMDBID" ]; then
-                                #Get trailer YouTube ID
-                                JSON=($(curl -s "http://api.themoviedb.org/3/movie/$TMDBID/videos?api_key=$API&language=$LANG" | jq -r '.results[] | select(.type=="Trailer") | .key'))
-                                ID="${JSON[0]}"
+                        log ""
+                        log "Movie Path: $DIR"
+                        log "Processing file: $FILENAME.nfo"
 
-                                log ""
-                                log "Movie Path: $DIR"
-                                log "Processing file: $FILENAME.nfo"
+                        if ! [ -z "$TMDBID" ]; then
+
                                 log "TheMovieDB: https://www.themoviedb.org/movie/$TMDBID"
 
-                                if ! [ -z "$ID" ]; then
+                                #Get trailer YouTube ID from themoviedb.org
+                                JSON=($(curl -s "http://api.themoviedb.org/3/movie/$TMDBID/videos?api_key=$API&language=$LANGUAGE" | jq -r '.results[] | select(.type=="Trailer") | .key'))
+                                ID="${JSON[0]}"
 
-                                        log "YouTube: $YTB_URL$ID"
-                                        log "Downloading: $YTB_URL$ID"
+                                if ! [ -z "$ID" ]; then
+                                                #Start download
+                                        log "YouTube: https://www.youtube.com/watch?v=$ID"
                                         downloadTrailer
 
                                 else
@@ -62,6 +74,7 @@ do
                                 fi
 
                         else
+                                log "TheMovieDB: n/a"
                                 missing "Error: Missing TheMovieDB ID - $FILENAME - $DIR"
                         fi
 
