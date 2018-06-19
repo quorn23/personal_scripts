@@ -14,6 +14,7 @@ fi
 #################################
 
 rm trailerdl.log &>/dev/null
+rm trailerdl-missing.log &>/dev/null
 
 downloadTrailer(){
         youtube-dl -f mp4 "$YTB_URL$ID" -o "$DIR/$FILENAME-trailer.%(ext)s" --restrict-filenames |& tee -a trailerdl.log
@@ -21,6 +22,10 @@ downloadTrailer(){
 
 log(){
         echo "$1" |& tee -a trailerdl.log
+}
+
+missing(){
+        echo "$1" |& tee -a trailerdl-missing.log &>/dev/null
 }
 
 for i in "${PATHS[@]}"
@@ -47,6 +52,8 @@ do
                         if ! [ -z "$ID" ]; then
                                 log "Downloading: $YTB_URL$ID"
                                 downloadTrailer
+                        else
+                                missing "$FILENAME - $DIR - TheMovieDB ID: $TMDBID"
                         fi
 
                 fi
