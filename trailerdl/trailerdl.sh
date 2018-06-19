@@ -39,21 +39,25 @@ do
                         #Get TheMovieDB ID from NFO
                         TMDBID=$(awk -F "[><]" '/tmdbid/{print $3}' "$DIR/$FILENAME.nfo" | awk -F'[ ]' '{print $1}')
 
-                        #Get trailer YouTube ID
-                        JSON=($(curl -s "http://api.themoviedb.org/3/movie/"$TMDBID"/videos?api_key="$API"&language="$LANG | jq -r '.results[] | select(.type=="Trailer") | .key'))
-                        ID="${JSON[0]}"
+                        if ! [ -z "$TMDBID" ]; then
+                                #Get trailer YouTube ID
+                                JSON=($(curl -s "http://api.themoviedb.org/3/movie/$TMDBID/videos?api_key=$API&language=$LANG" | jq -r '.results[] | select(.type=="Trailer") | .key'))
+                                ID="${JSON[0]}"
 
-                        log ""
-                        log "Movie Path: $DIR"
-                        log "Processing file: $FILENAME.nfo"
-                        log "TheMovieDB ID: $TMDBID"
-                        log "YouTube ID: $ID"
+                                log ""
+                                log "Movie Path: $DIR"
+                                log "Processing file: $FILENAME.nfo"
+                                log "TheMovieDB ID: $TMDBID"
+                                log "YouTube ID: $ID"
 
-                        if ! [ -z "$ID" ]; then
-                                log "Downloading: $YTB_URL$ID"
-                                downloadTrailer
+                                if ! [ -z "$ID" ]; then
+                                        log "Downloading: $YTB_URL$ID"
+                                        downloadTrailer
+                                else
+                                        missing "Error: Missing YouTube ID - $FILENAME - $DIR - TheMovideDB ID: $TMDBID"
+                                fi
                         else
-                                missing "$FILENAME - $DIR - TheMovieDB ID: $TMDBID"
+                                missing "Error: Missing TheMovieDB ID - $FILENAME - $DIR"
                         fi
 
                 fi
