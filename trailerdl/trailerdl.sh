@@ -30,11 +30,11 @@ missing(){
 
 for i in "${PATHS[@]}"
 do
-        find "$i" -mindepth 1 -maxdepth 2 -type d '!' -exec sh -c 'ls -1 "{}"|egrep -i -q "trailer\.(mp4|avi|mkv)$"' ';' -print | while read DIR
+        find "$i" -mindepth 1 -maxdepth 2 -type d '!' -exec sh -c 'ls -1 "{}" | egrep -i -q "trailer\.(mp4|avi|mkv)$"' ';' -print | while read DIR
         do
                 FILENAME=$(ls "$DIR" | egrep '\.nfo$' | sed s/".nfo"//g)
 
-                if ! [ -z "$FILENAME" ]; then
+                if [ -f "$DIR/$FILENAME.nfo" ]; then
 
                         #Get TheMovieDB ID from NFO
                         TMDBID=$(awk -F "[><]" '/tmdbid/{print $3}' "$DIR/$FILENAME.nfo" | awk -F'[ ]' '{print $1}')
@@ -47,15 +47,20 @@ do
                                 log ""
                                 log "Movie Path: $DIR"
                                 log "Processing file: $FILENAME.nfo"
-                                log "TheMovieDB ID: $TMDBID"
-                                log "YouTube ID: $ID"
+                                log "TheMovieDB: https://www.themoviedb.org/movie/$TMDBID"
 
                                 if ! [ -z "$ID" ]; then
+
+                                        log "YouTube: $YTB_URL$ID"
                                         log "Downloading: $YTB_URL$ID"
                                         downloadTrailer
+
                                 else
-                                        missing "Error: Missing YouTube ID - $FILENAME - $DIR - TheMovideDB ID: $TMDBID"
+                                        log "YouTube: n/a"
+                                        missing "Error: Missing YouTube ID - $FILENAME - $DIR - TheMovideDB: https://www.themoviedb.org/movie/$TMDBID"
+
                                 fi
+
                         else
                                 missing "Error: Missing TheMovieDB ID - $FILENAME - $DIR"
                         fi
