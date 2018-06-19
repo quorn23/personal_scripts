@@ -25,7 +25,7 @@ log(){
 
 for i in "${PATHS[@]}"
 do
-        find $i -mindepth 1 -maxdepth 2 -type d '!' -exec sh -c 'ls -1 "{}"|egrep -i -q "trailer\.(mp4|avi|mkv)$"' ';' -print | while read DIR
+        find "$i" -mindepth 1 -maxdepth 2 -type d '!' -exec sh -c 'ls -1 "{}"|egrep -i -q "trailer\.(mp4|avi|mkv)$"' ';' -print | while read DIR
         do
                 FILENAME=$(ls "$DIR" | egrep '\.nfo$' | sed s/".nfo"//g)
 
