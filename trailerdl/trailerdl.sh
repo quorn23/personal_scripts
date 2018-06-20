@@ -32,6 +32,9 @@ downloadTrailer(){
                 missing "$DL"
                 missing "------------------"
                 missing ""
+        else
+                #Update file modification date
+                touch "$DIR/$FILENAME-trailer.mp4"
         fi
 }
 
