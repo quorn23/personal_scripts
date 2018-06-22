@@ -1,8 +1,7 @@
 #!/bin/bash
-avr_mac="00:05:CD:36:5B:6E"
-avr_ip="192.168.2.244"
-BD_mac="00:C2:C6:CA:2F:79"
-SATCBL_mac="F8:DA:0C:A0:D1:97"
+avr_mac="00:05:cd:36:5b:6e"
+BD_mac="00:c2:c6:ca:2f:79"
+SATCBL_mac="f8:da:0c:a0:d1:97"
 
 loop_sleep_timer=2s
 effect="Rainbow swirl fast"
@@ -12,7 +11,7 @@ while true
 do
 
         ping_avr=$(arp | grep "$avr_mac")
-        #ping_avr=$(ping "$avr_ip" -c 1 | grep "1 received")
+        avr_ip=$(echo "$ping_avr" | awk ' { print $1 } ')
         hyperion_status=$(service hyperion status | grep running)
 
         # Hyperion status
@@ -29,39 +28,46 @@ do
         # If AVR is online
         if ! [ -z "$ping_avr" ] && [ "${hyperion_prio[0]}" = "1" ]; then
 
-                echo "Custom lightning is set"
+                if [ -z "$custom_msg" ]; then
+                        custom_msg=true
+                        echo "Custom lightning is set"
+                fi
 
         elif ! [ -z "$ping_avr" ]; then
 
+                unset custom_msg
+
                 avr_input=$(curl -s http://$avr_ip/goform/formMainZone_MainZoneXmlStatusLite.xml | grep InputFuncSelect | sed -n -e "s/.*<InputFuncSelect><value>\(.*\)<\/value><\/InputFuncSelect>.*/\1/p")
 
-                echo "Active input: $avr_input"
+                if ! [ "$avr_input" = "$avr_previousinput" ]; then
+                        avr_previousinput="$avr_input"
+                        echo "Active input: $avr_input"
+                fi
 
                 # BD input
                 if [ "$avr_input" = "BD" ]; then
 
+                        input="BD"
                         ping=$(arp | grep "$BD_mac")
 
                         if ! [ -z "$ping" ]; then
 
                                 unset pingeffect
 
-                                if [ "${hyperion_prio[0]}" = "10" ]; then
-                                        echo "BD: Ambilight is active"
-                                else
+                                if ! [ "${hyperion_prio[0]}" = "10" ]; then
                                         if [ "${hyperion_prio[0]}" = "2" ]; then
-                                                echo "BD: Clear ping effect"
+                                                echo "$input: Clear ping effect"
                                                 hyperion-remote -p 2 --clear
                                         fi
                                         if [ "${hyperion_prio[0]}" = "3" ]; then
-                                                echo "BD: Clear color"
+                                                echo "$input: Clear color"
                                                 hyperion-remote -p 3 --clear
                                         fi
                                 fi
 
                         elif [ -z "$pingeffect" ]; then
 
-                                echo "BD not reachable. Set effect."
+                                echo "$input: Not reachable. Set effect."
                                 pingeffect=true
                                 hyperion-remote -p 2 --effect "$effect"
 
@@ -70,26 +76,25 @@ do
                 # SAT/CBL input
                 elif [ "$avr_input" = "SAT/CBL" ]; then
 
+                        input="SAT/CBL"
                         ping=$(arp | grep "$SATCBL_mac")
 
                         if ! [ -z "$ping" ]; then
 
                                 unset pingeffect
 
-                                if [ "${hyperion_prio[0]}" = "3" ]; then
-                                        echo "SAT/CBL: Color is set"
-                                else
+                                if ! [ "${hyperion_prio[0]}" = "3" ]; then
                                         if [ "${hyperion_prio[0]}" = "2" ]; then
-                                                echo "SAT/CBL: Clear ping effect"
+                                                echo "$input: Clear ping effect"
                                                 hyperion-remote -p 2 --clear
                                         fi
-                                        echo "SAT/CBL: Set color"
+                                        echo "$input: Set color"
                                         hyperion-remote -p 3 -c blue
                                 fi
 
                         elif [ -z "$pingeffect" ]; then
 
-                                echo "SAT/CBL not reachable. Set effect."
+                                echo "$input: Not reachable. Set effect."
                                 pingeffect=true
                                 hyperion-remote -p 2 --effect "$effect"
 
