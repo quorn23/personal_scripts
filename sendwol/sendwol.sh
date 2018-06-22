@@ -1,5 +1,5 @@
 #!/bin/bash
-check_mac=('00:C2:C6:CA:2F:79' 'B8:AE:ED:EB:07:03')
+check_mac=('00:c2:c6:ca:2f:79' 'b8:ae:ed:eb:07:03')
 wol_mac=('70:85:c2:02:c6:31')
 loop_sleep_timer=5s
 
@@ -14,11 +14,10 @@ do
         # Check if client IPs are online
         for client in "${check_mac[@]}"
         do
-                #ping_client=$(ping "$client" -c 1 | grep "1 received")
                 ping_client=$(arp | grep "$client")
 
                 if ! [ -z "$ping_client" ]; then
-                        found_client=$(arp | grep "$client" | awk ' { print $1 } ')
+                        found_client=$(echo "$ping_client" | awk ' { print $1 } ')
                         break
                 fi
         done
@@ -29,13 +28,11 @@ do
                 for wake_target in "${wol_mac[@]}"
                 do
                         # Ping target to check if it's already online
-                        #wake_ip=$(arp | grep "$wake_target" | awk ' { print $1 } ')
-                        #ping_target=$(ping "$wake_ip" -c 1 | grep "1 received")
                         ping_target=$(arp | grep "$wake_target")
 
                         # Send WOL if required
                         if [ -z "$ping_target" ]; then
-                                echo "Client $client found and $wake_ip is offline. Sending WOL signal."
+                                echo "Client $found_client found and $ping_target is offline. Sending WOL signal."
                                 sudo etherwake "$wake_target"
                                 sleep 10s
                         fi
