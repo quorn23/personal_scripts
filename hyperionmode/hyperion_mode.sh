@@ -2,7 +2,7 @@
 avr_mac="00:05:CD:36:5B:6E"
 avr_ip="192.168.2.244"
 BD_mac="00:C2:C6:CA:2F:79"
-CBLSAT_mac="F8:DA:0C:A0:D1:97"
+SATCBL_mac="F8:DA:0C:A0:D1:97"
 
 loop_sleep_timer=2s
 effect="Rainbow swirl fast"
@@ -41,7 +41,6 @@ do
                 if [ "$avr_input" = "BD" ]; then
 
                         ping=$(arp | grep "$BD_mac")
-                        #ping=$(ping "$BD_ip" -c 1 | grep "1 received")
 
                         if ! [ -z "$ping" ]; then
 
@@ -72,7 +71,6 @@ do
                 elif [ "$avr_input" = "SAT/CBL" ]; then
 
                         ping=$(arp | grep "$SATCBL_mac")
-                        #ping=$(ping "$SATCBL_ip" -c 1 | grep "1 received")
 
                         if ! [ -z "$ping" ]; then
 
@@ -97,6 +95,10 @@ do
 
                         fi
 
+                # All other inputs
+                elif ! [ -z "$hyperion_color" ] || ! [ -z "$hyperion_effect" ] ; then
+                        hyperion-remote --clearall
+                        hyperion-remote -c black
                 fi
 
         elif ! [ -z "$hyperion_color" ] || ! [ -z "$hyperion_effect" ] ; then
