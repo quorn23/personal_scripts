@@ -8,10 +8,12 @@ do
 
 	sleep "$loop_sleep_timer"
 
-	ping_avr=$(ping "$avr_ip" -c 1 | grep "1 received")
+	avr_json=$(curl -s "http://$avr_ip/YamahaExtendedControl/v1/main/getStatus")
+	avr_power=$(echo "$avr_json" | jq -r '.power')
+	avr_input=$(echo "$avr_json" | jq -r '.input')
+
 	hyperion_status=$(service hyperion status | grep running)
 
-	#Status
 	if [ -z "$hyperion_status" ]; then
 		echo "Hyperion is not running. Starting Hyperion."
 		sudo service hyperion start
@@ -19,26 +21,26 @@ do
 	else
 		hyperion_json=$(hyperion-remote -l | tail -n +7)
 		hyperion_prio=($(echo "$hyperion_json" | jq '.priorities[].priority'))
+		fallback_effect=$(echo "${hyperion_prio[@]}" | grep 11)
 	fi
 
-	if ! [ -z "$ping_avr" ] && [ "${hyperion_prio[0]}" = "1" ]; then
+	if ! [ "$avr_power" = "standby" ] && [ "${hyperion_prio[0]}" = "1" ]; then
 
 		if ! [ "$is_set" = "custom" ]; then
 			echo "Custom Ambilight mode is set."
 			is_set="custom"
 		fi
 
-	elif ! [ -z "$ping_avr" ] && ! [ "${hyperion_prio[0]}" = "1" ]; then
+	elif ! [ "$avr_power" = "standby" ] && ! [ "${hyperion_prio[0]}" = "1" ]; then
 
-		#Set fallback animation
 		if ! [ "$power_status" = "Online" ]; then
 			power_status="Online"
 			echo "AVR is online"
-			hyperion-remote -p 11 --effect "Rainbow swirl fast"
 		fi
 
-		#Get active AVR input
-		avr_input=$(curl -s http://$avr_ip/YamahaExtendedControl/v1/main/getStatus | jq -r '.input' )
+		if [ -z "$fallback_effect" ]; then
+			hyperion-remote -p 11 --effect "Police Lights Solid"
+		fi
 
 		if ! [ "$avr_input" = "$avr_status" ]; then
 			avr_status="$avr_input"
