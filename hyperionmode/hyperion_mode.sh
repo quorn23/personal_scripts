@@ -12,18 +12,22 @@ do
 	avr_power=$(echo "$avr_json" | jq -r '.power')
 	avr_input=$(echo "$avr_json" | jq -r '.input')
 
-	hyperion_status=$(service hyperion status | grep running)
+	#Get Hyperion status if AVR is powered on
+	if ! [ "$avr_power" = "standby" ]; then
 
-	if [ -z "$hyperion_status" ]; then
-		echo "Hyperion is not running. Starting Hyperion."
-		sudo service hyperion start
-		sleep 2s
-	else
 		hyperion_json=$(hyperion-remote -l | tail -n +7)
-		hyperion_prio=($(echo "$hyperion_json" | jq '.priorities[].priority'))
-		fallback_effect=$(echo "${hyperion_prio[@]}" | grep 11)
+		if [ -z "$hyperion_json" ]; then
+			echo "Hyperion is not running. Starting Hyperion."
+			sudo service hyperion start
+			sleep 2s
+		else
+			hyperion_prio=($(echo "$hyperion_json" | jq '.priorities[].priority'))
+			fallback_effect=$(echo "${hyperion_prio[@]}" | grep 11)
+		fi
+
 	fi
 
+	#Check for custom lightning
 	if ! [ "$avr_power" = "standby" ] && [ "${hyperion_prio[0]}" = "1" ]; then
 
 		if ! [ "$is_set" = "custom" ]; then
@@ -31,6 +35,7 @@ do
 			is_set="custom"
 		fi
 
+	#Set Ambilight mode based on the active input
 	elif ! [ "$avr_power" = "standby" ] && ! [ "${hyperion_prio[0]}" = "1" ]; then
 
 		if ! [ "$power_status" = "Online" ]; then
@@ -75,6 +80,7 @@ do
 			is_set="undefined"
 		fi
 
+	#AVR is powered off. Clear everything.
 	elif ! [ "$power_status" = "Offline" ]; then
 
 		power_status="Offline"
