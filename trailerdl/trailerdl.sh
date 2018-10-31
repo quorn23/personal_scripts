@@ -5,15 +5,15 @@
 #################################
 
 #Search this paths (required)
-PATHS=( "/mnt/omv1/omv1/filme" "/mnt/omv2/omv2/filme" "/mnt/omv3/omv3/filme" "/mnt/omv4/omv4/filme" )
-
+#PATHS=( "/mnt/omv1/omv1/filme" "/mnt/omv2/omv2/filme" "/mnt/omv3/omv3/filme" "/mnt/omv4/omv4/filme" )
+PATHS=( "/volume1/movies" )
 #Your TheMovieDB API (required)
 #Please visit https://developers.themoviedb.org/3 for more information
 API=
 
 #Language Code (required)
 #Examples: de = German, en = English, etc.
-LANGUAGE=de
+LANGUAGE=en
 
 #Custom path to store the log files. Uncomment this line and change the path. By default the working directory is going to be used.
 #LOGPATH="/home/myexampleuser"
